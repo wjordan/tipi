@@ -38,9 +38,10 @@ module Tipi
 
       def start_listeners(config, virtual_hosts)
         spin do
-          puts "listening on port 1234"
+          port = config[:port] || 1234
+          puts "listening on port #{port}"
           puts "pid: #{Process.pid}"
-          server = Polyphony::Net.tcp_listen('0.0.0.0', 1234, { reuse_addr: true, dont_linger: true })
+          server = Polyphony::Net.tcp_listen('0.0.0.0', port, { reuse_addr: true, dont_linger: true })
           while (connection = server.accept)
             spin { virtual_hosts[:'*'].call(connection) }
           end

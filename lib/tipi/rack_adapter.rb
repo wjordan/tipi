@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require 'rack'
+require 'rack/builder'
 
 module Tipi
   module RackAdapter
@@ -28,8 +29,7 @@ module Tipi
       end
       
       def load(path)
-        src = IO.read(path)
-        instance_eval(src, path, 1)
+        run(Rack::Builder.parse_file(path).first)
       end
 
       RACK_ENV = {
@@ -47,7 +47,7 @@ module Tipi
         'rack.logger'                    => nil,
         'rack.multipart.buffer_size'     => nil,
         'rack.multipar.tempfile_factory' => nil
-      }
+      }.freeze
       
       def env(request)
         Hash.new do |h, k|
@@ -71,7 +71,9 @@ module Tipi
       
       def respond(request, (status_code, headers, body))
         headers[':status'] = status_code.to_s
-        request.respond(body.first, headers)
+        buffer = +''
+        body.each { |b| buffer << b }
+        request.respond(buffer, headers)
       end
     end
   end

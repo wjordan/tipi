@@ -227,7 +227,7 @@ module Tipi
       
       headers.each do |k, v|
         next if k =~ /^:/
-        
+        next if k =~ /Content-Length/i # Always use chunked TE
         data << format_header_lines(k, v)
       end
       data << "\r\n"

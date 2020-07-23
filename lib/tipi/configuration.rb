@@ -21,13 +21,19 @@ module Tipi
         virtual_hosts = setup_virtual_hosts(config)
         start_listeners(config, virtual_hosts)
         suspend
-        # supervise(restart: true)
+      rescue Interrupt
+        # Ctrl-C to exit
       end
       
       def forked_supervise(config)
+        config[:reuse_port] = true
         config[:forked].times do
           supervise_process { simple_supervise(config) }
         end
+      end
+
+      def supervise_process(&block)
+        Polyphony.fork { block.call }
       end
 
       def setup_virtual_hosts(config)
@@ -37,15 +43,17 @@ module Tipi
       end
 
       def start_listeners(config, virtual_hosts)
+        config.merge!(
+          reuse_addr: true,
+          dont_linger: true
+        )
         spin do
           port = config[:port] || 1234
-          puts "listening on port #{port}"
-          puts "pid: #{Process.pid}"
-          server = Polyphony::Net.tcp_listen('0.0.0.0', port, { reuse_addr: true, dont_linger: true })
+          puts "pid #{Process.pid} listening on port #{port}"
+          server = Polyphony::Net.tcp_listen('0.0.0.0', port, config)
           while (connection = server.accept)
             spin { virtual_hosts[:'*'].call(connection) }
           end
-          puts "done"
         end
       end
     end

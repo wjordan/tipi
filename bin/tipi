@@ -6,8 +6,15 @@ require File.expand_path('../lib/tipi/configuration', __dir__)
 
 config = {}
 config[:port] = ENV['PORT'].to_i if ENV['PORT']
+require 'etc'
+config[:forked] = Etc.nprocessors unless ENV['NO_FORK']
 
 configuration_manager = spin { Tipi::Configuration.supervise_config }
 
 configuration_manager << config
-configuration_manager.await
+
+begin
+  configuration_manager.await
+rescue Interrupt
+  # Ctrl-C to exit
+end

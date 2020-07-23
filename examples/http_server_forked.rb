@@ -10,7 +10,7 @@ opts = {
   dont_linger: true
 }
 
-server = Polyphony::HTTP::Server.listen('0.0.0.0', 1234, opts)
+server = Tipi.listen('0.0.0.0', 1234, opts)
 
 puts 'Listening on port 1234'
 
